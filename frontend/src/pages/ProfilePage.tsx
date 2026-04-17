@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   ShoppingBag, HelpCircle, Heart, Star, UserCircle,
-  Settings, ChevronRight, LogOut, Edit3, MapPin,
+  ChevronRight, LogOut, Edit3, MapPin,
   Calendar, Shield, Camera, Loader2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -16,8 +16,6 @@ const menuItems = [
   { icon: HelpCircle,  label: 'Help Center', sublabel: 'Help regarding your recent trades', path: '/help' },
   { icon: Heart,       label: 'Favorites',   sublabel: 'Your collection',                path: '/saved' },
   { icon: Star,        label: 'Ratings',     sublabel: 'Your ratings',                   path: '/ratings' },
-  { icon: UserCircle,  label: 'My Profile',  sublabel: 'Change your profile details',    path: '/edit-profile' },
-  { icon: Settings,    label: 'Settings',    sublabel: 'App preferences & privacy',      path: '/settings' },
 ];
 
 const profileTabs = ['About', 'Reviews'];
