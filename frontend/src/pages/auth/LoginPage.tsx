@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { motion } from 'framer-motion';
-import { TrendingUp, ShieldCheck } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import useAuthStore from '@/stores/authStore';
 import appIcon from '@/assets/bc.png';
 import api from '@/lib/api';
@@ -75,7 +75,7 @@ export const LoginPage: React.FC = () => {
             <span className="text-brand-400">anything,</span><br />
             locally.
           </h2>
-          <p className="text-slate-400 text-lg">Kurukshetra's most trusted peer-to-peer marketplace.</p>
+          <p className="text-slate-400 text-lg">Kurukshetra's most trusted marketplace.</p>
 
           <div className="flex gap-8 mt-10">
             {[
@@ -98,7 +98,7 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="relative z-10 text-slate-600 text-xs">© 2026. All rights reserved.</p>
+        <p className="relative z-10 text-slate-600 text-xs">© 2026. All rights reserved. Sayan x Oz</p>
       </div>
 
       {/* ── Right panel ── */}
@@ -131,7 +131,7 @@ export const LoginPage: React.FC = () => {
 
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome</h2>
             <p className="text-slate-500 text-sm mb-8">
-              Sign in to access your account and start trading.
+              Sign in your account and start trading.
             </p>
 
             {/* Google Sign-In button (rendered by Google SDK) */}
@@ -145,7 +145,6 @@ export const LoginPage: React.FC = () => {
                 <GoogleLogin
                   onSuccess={handleSuccess}
                   onError={() => {
-                    // Google popup closed or failed — nothing to do
                   }}
                   size="large"
                   shape="rectangular"
@@ -154,19 +153,6 @@ export const LoginPage: React.FC = () => {
                   width="320"
                 />
               )}
-            </div>
-
-            {/* Divider + trust copy */}
-            <div className="mt-8 pt-8 border-t border-surface-border text-center space-y-2">
-              <p className="text-xs text-slate-400 leading-relaxed">
-                By continuing, you agree to our{' '}
-                <span className="text-brand-600 cursor-pointer hover:underline">Terms</span> and{' '}
-                <span className="text-brand-600 cursor-pointer hover:underline">Privacy Policy</span>.
-              </p>
-              <div className="text-xs text-slate-400 flex items-center justify-center gap-1.5">
-                <ShieldCheck size={12} className="text-emerald-500" />
-                <span>Secured by Google OAuth 2.0. We never store your password.</span>
-              </div>
             </div>
           </div>
         </motion.div>
