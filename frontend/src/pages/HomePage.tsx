@@ -11,14 +11,15 @@ import useAuthStore from '@/stores/authStore';
 import { adaptProduct } from '@/lib/adapters';
 import appIcon from '@/assets/bc.png';
 import useBadgeStore from '@/stores/badgeStore';
+import { MobileNotificationSheet } from '@/components/notifications/MobileNotificationSheet';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
+  const [notifSheetOpen, setNotifSheetOpen] = useState(false);
   const { products, isLoading, fetchProducts } = useProductStore();
   const user = useAuthStore((s) => s.user);
   const notificationCount = useBadgeStore((s) => s.notificationCount);
-  const markNotificationsSeen = useBadgeStore((s) => s.markNotificationsSeen);
 
   useEffect(() => {
     const selectedCategory = categories.find((c) => c.id === activeCategory);
@@ -29,21 +30,24 @@ export const HomePage: React.FC = () => {
   const adapted = products.map(adaptProduct);
 
   return (
+    <>
     <PageShell>
       {/* ── Mobile header ── */}
       <div className="lg:hidden px-4 pt-12 pb-4 bg-white sticky top-0 z-40 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
             <img src={appIcon} alt="App icon" className="w-9 h-9 rounded-xl object-cover shadow-sm shadow-brand-500/20" />
-            <div className="flex items-center gap-1 text-slate-500 text-xs mb-0.5">
-              <MapPin size={12} className="text-brand-500" />
-              <span>{user?.location || 'Kolkata, WB'}</span>
-            </div>
+            {user?.location && (
+              <div className="flex items-center gap-1 text-slate-500 text-xs mb-0.5">
+                <MapPin size={12} className="text-brand-500" />
+                <span>{user.location}</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => markNotificationsSeen(user?._id)}
+              onClick={() => setNotifSheetOpen(true)}
               className="relative w-9 h-9 rounded-xl bg-surface-muted flex items-center justify-center"
             >
               <Bell size={18} className="text-slate-600" />
@@ -223,5 +227,8 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
     </PageShell>
+
+    <MobileNotificationSheet open={notifSheetOpen} onClose={() => setNotifSheetOpen(false)} />
+    </>
   );
 };
