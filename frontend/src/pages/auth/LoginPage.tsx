@@ -22,7 +22,8 @@ const formatCompactCount = (value: number): string => {
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loginWithGoogle, isLoading, user } = useAuthStore();
+  const { loginWithGoogle, isLoading, user, error } = useAuthStore();
+  const [googleError, setGoogleError] = React.useState<string | null>(null);
   const [stats, setStats] = React.useState<MarketplaceStats>({
     activeListings: 0,
     happyUsers: 0,
@@ -49,7 +50,10 @@ export const LoginPage: React.FC = () => {
 
   const handleSuccess = async (credentialResponse: { credential?: string }) => {
     if (!credentialResponse.credential) return;
+    // 🔥 PRINT GOOGLE TOKEN HERE
+    console.log("🔥 GOOGLE TOKEN:", credentialResponse.credential);
     try {
+      setGoogleError(null);
       await loginWithGoogle(credentialResponse.credential);
       navigate('/', { replace: true });
     } catch {
@@ -134,6 +138,12 @@ export const LoginPage: React.FC = () => {
               Sign in to access your account and start trading.
             </p>
 
+            {(error || googleError) && (
+              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error || googleError}
+              </div>
+            )}
+
             {/* Google Sign-In button (rendered by Google SDK) */}
             <div className="flex justify-center">
               {isLoading ? (
@@ -145,7 +155,7 @@ export const LoginPage: React.FC = () => {
                 <GoogleLogin
                   onSuccess={handleSuccess}
                   onError={() => {
-                    // Google popup closed or failed — nothing to do
+                    setGoogleError('Google sign-in could not be completed. Check that your browser popup and Google OAuth settings allow http://localhost:5173.');
                   }}
                   size="large"
                   shape="rectangular"

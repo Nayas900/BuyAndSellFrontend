@@ -20,10 +20,20 @@ export const InboxPage: React.FC = () => {
 
   const { chats, isLoading, fetchChats, openChat, sendMessage, messages } = useChatStore();
   const user = useAuthStore((s) => s.user);
+  const myId = user?._id || (user as any)?.id || '';
 
   useEffect(() => { fetchChats(); }, [fetchChats]);
 
-  const adapted: Conversation[] = chats.map((c) => adaptChat(c, user?._id ?? ''));
+  const adapted: Conversation[] = (chats || [])
+    .map((c) => {
+      try {
+        return adaptChat(c, myId);
+      } catch {
+        console.log('adaptChat error:', c);
+        return null;
+      }
+    })
+    .filter(Boolean) as Conversation[];
 
   const handleConvClick = (convId: string) => {
     if (window.innerWidth < 1024) {
@@ -36,7 +46,7 @@ export const InboxPage: React.FC = () => {
 
   const activeConv = adapted.find((c) => c.id === activeConvId) ?? null;
   const activeApiChat = chats.find((c) => c._id === activeConvId) ?? null;
-  const adaptedMessages: Message[] = messages.map((m) => adaptMessage(m, user?._id ?? ''));
+  const adaptedMessages: Message[] = (messages || []).map((m) => adaptMessage(m, myId));
 
   const handleSend = async (text: string) => {
     if (!activeConvId) return;
@@ -89,7 +99,7 @@ export const InboxPage: React.FC = () => {
             ) : (
               adapted.map((conv, i) => (
                 <motion.div
-                  key={conv.id}
+                  key={conv.id || i}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -108,7 +118,7 @@ export const InboxPage: React.FC = () => {
             <DesktopConversationPane
               conv={activeConv}
               messages={adaptedMessages}
-              productImage={activeApiChat.productId.images?.[0]}
+              productImage={activeApiChat?.productId?.images?.[0] || '/placeholder.png'}
               onSend={handleSend}
             />
           ) : (
@@ -144,7 +154,7 @@ export const InboxPage: React.FC = () => {
         ) : (
           adapted.map((conv, i) => (
             <motion.div
-                  key={conv.id}
+                  key={conv.id || i}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -191,7 +201,7 @@ const DesktopConversationPane: React.FC<{
   return (
     <>
       <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 bg-white border-b border-surface-border shadow-sm">
-        <img src={conv.participant.avatar} alt={conv.participant.name} className="w-9 h-9 rounded-full object-cover" />
+        <img src={conv.participant?.avatar || '/default-avatar.png'} alt={conv.participant.name} className="w-9 h-9 rounded-full object-cover" />
         <div className="flex-1">
           <p className="font-semibold text-slate-800 text-sm">{conv.participant.name}</p>
           <p className="text-xs text-emerald-500 font-medium">Active</p>
@@ -201,7 +211,7 @@ const DesktopConversationPane: React.FC<{
 
       <div className="shrink-0 mx-4 mt-3 bg-white rounded-2xl px-3 py-2.5 flex items-center gap-3 shadow-card">
         <img
-          src={productImage || conv.product.image}
+          src={productImage || conv.product?.image || '/placeholder.png'}
           alt={conv.product.title}
           className="w-11 h-11 rounded-xl object-cover"
         />
@@ -210,10 +220,12 @@ const DesktopConversationPane: React.FC<{
             <ShoppingBag size={11} className="text-brand-500" />
             <p className="text-xs text-slate-500 truncate">{conv.product.title}</p>
           </div>
-          <p className="font-bold text-slate-800 text-sm">₹{conv.product.price.toLocaleString('en-IN')}</p>
+          <p className="font-bold text-slate-800 text-sm">
+            ₹{conv.product?.price ? conv.product.price.toLocaleString('en-IN') : '0'}
+          </p>
         </div>
         <button
-          onClick={() => navigate(`/product/${conv.product.id}`)}
+          onClick={() => conv.product?.id && navigate(`/product/${conv.product.id}`)}
           className="px-3 py-1.5 bg-brand-600 text-white text-xs font-semibold rounded-xl shrink-0"
         >
           View

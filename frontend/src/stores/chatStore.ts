@@ -39,59 +39,125 @@ const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isLoading: false,
 
+  // ✅ FETCH CHATS (SAFE + FLEXIBLE)
   fetchChats: async () => {
     set({ isLoading: true });
     try {
-      const { data } = await api.get<ApiChat[]>('/chat');
-      set({ chats: data, isLoading: false });
-    } catch {
+      const { data } = await api.get<any[]>('/chat');
+
+      const chats: ApiChat[] = (data || []).map((item) => ({
+        _id: item._id || item.id,
+        productId: item.productId || {},
+        buyerId: item.buyerId || {},
+        sellerId: item.sellerId || {},
+        lastMessage: item.lastMessage || '',
+        lastMessageAt: item.lastMessageAt || new Date().toISOString(),
+        unreadCount: item.unreadCount || 0,
+      }));
+
+      set({ chats, isLoading: false });
+    } catch (err) {
+      console.error("❌ fetchChats error:", err);
       set({ isLoading: false });
     }
   },
 
+  // ✅ START CHAT (ID SAFE)
   startChat: async (productId: string) => {
-    const { data } = await api.post<ApiChat>('/chat/start', { productId });
+    const { data } = await api.post<any>('/chat/start', { productId });
+
+    const chat: ApiChat = {
+      ...data,
+      _id: data._id || data.id,
+    };
+
     set((s) => {
-      const exists = s.chats.find((c) => c._id === data._id);
-      return exists ? {} : { chats: [data, ...s.chats] };
+      const exists = s.chats.find((c) => c._id === chat._id);
+      return exists ? {} : { chats: [chat, ...s.chats] };
     });
-    return data;
+
+    return chat;
   },
 
+  // ✅ OPEN CHAT (SAFE ARRAY + UNREAD FIX)
   openChat: async (chatId: string) => {
     set({ isLoading: true });
+
     try {
-      const { data } = await api.get<{ chat: ApiChat; messages: ApiMessage[] }>(
-        `/chat/${chatId}`
-      );
+      const { data } = await api.get<any>(`/chat/${chatId}`);
+
+      // 🔥 backend returns List<Map> → normalize
+      const messages: ApiMessage[] = Array.isArray(data)
+        ? data.map((m) => ({
+            _id: m._id,
+            chatId: m.chatId,
+            text: m.text,
+            isRead: m.isRead,
+            createdAt: m.createdAt,
+            senderId:
+              typeof m.senderId === 'object'
+                ? m.senderId
+                : { _id: m.senderId, name: '', avatar: '' },
+          }))
+        : [];
+
       let consumedUnread = 0;
+
       set((s) => {
-        consumedUnread = s.chats.find((c) => c._id === chatId)?.unreadCount || 0;
+        consumedUnread =
+          s.chats.find((c) => c._id === chatId)?.unreadCount || 0;
+
         return {
-          activeChat: data.chat,
-          messages: data.messages,
+          activeChat: s.chats.find((c) => c._id === chatId) || null,
+          messages,
           isLoading: false,
           chats: s.chats.map((c) =>
             c._id === chatId ? { ...c, unreadCount: 0 } : c
           ),
         };
       });
+
       if (consumedUnread > 0) {
         useBadgeStore.getState().consumeUnread(consumedUnread);
       }
-    } catch {
+    } catch (err) {
+      console.error("❌ openChat error:", err);
       set({ isLoading: false });
     }
   },
 
+  // ✅ SEND MESSAGE (FULLY SAFE)
   sendMessage: async (chatId: string, text: string) => {
-    const { data } = await api.post<ApiMessage>('/chat/message', { chatId, text });
-    set((s) => ({
-      messages: [...s.messages, data],
-      chats: s.chats.map((c) =>
-        c._id === chatId ? { ...c, lastMessage: text, lastMessageAt: data.createdAt } : c
-      ),
-    }));
+    try {
+      const { data } = await api.post<any>('/chat/message', { chatId, text });
+
+      const formatted: ApiMessage = {
+        _id: data._id,
+        chatId: data.chatId,
+        text: data.text,
+        isRead: data.isRead,
+        createdAt: data.createdAt,
+        senderId:
+          typeof data.senderId === 'object'
+            ? data.senderId
+            : { _id: data.senderId, name: '', avatar: '' },
+      };
+
+      set((s) => ({
+        messages: [...(s.messages || []), formatted],
+        chats: s.chats.map((c) =>
+          c._id === chatId
+            ? {
+                ...c,
+                lastMessage: text,
+                lastMessageAt: data.createdAt,
+              }
+            : c
+        ),
+      }));
+    } catch (err) {
+      console.error("❌ sendMessage error:", err);
+    }
   },
 }));
 

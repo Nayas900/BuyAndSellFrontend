@@ -29,8 +29,10 @@ export const ConversationPage: React.FC = () => {
     await sendMessage(id, text);
   };
 
-  const adapted = activeChat ? adaptChat(activeChat, user?._id ?? '') : null;
-  const adaptedMessages = messages.map((m) => adaptMessage(m, user?._id ?? ''));
+  const myId = user?._id || (user as any)?.id || '';
+  const adapted = activeChat ? adaptChat(activeChat, myId) : null;
+
+  const adaptedMessages = (messages || []).map((m) => adaptMessage(m, myId));
 
   if (isLoading && !activeChat) {
     return (

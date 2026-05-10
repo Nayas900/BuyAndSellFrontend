@@ -39,30 +39,37 @@ export const ProductDetailPage: React.FC = () => {
     else clearSavedActive();
   }, [user?._id, ensureSavedUser, clearSavedActive]);
 
-  useEffect(() => {
-    if (!id) return;
-    setIsLoading(true);
-    setExpanded(false);
+ useEffect(() => {
+  if (!id) {
+    navigate('/'); // prevent undefined API call
+    return;
+  }
 
-    api.get<ApiProduct>(`/products/${id}`)
-      .then(({ data }) => {
-        setApiProduct(data);
-        // Fetch related products from same category
-        return api.get<{ products: ApiProduct[] }>('/products', {
-          params: { category: data.category, limit: 4 },
-        });
-      })
-      .then(({ data }) => {
-        setRelated(
-          data.products
-            .filter((p) => p._id !== id)
-            .slice(0, 4)
-            .map(adaptProduct)
-        );
-      })
-      .catch(() => navigate('/'))
-      .finally(() => setIsLoading(false));
-  }, [id, navigate]);
+  setIsLoading(true);
+  setExpanded(false);
+
+  api.get<ApiProduct>(`/products/${id}`)
+    .then(({ data }) => {
+      setApiProduct(data);
+
+      return api.get<{ products: ApiProduct[] }>('/products', {
+        params: { category: data.category, limit: 4 },
+      });
+    })
+    .then(({ data }) => {
+      setRelated(
+        data.products
+          .filter((p) => p._id !== id)
+          .slice(0, 4)
+          .map(adaptProduct)
+      );
+    })
+    .catch((err) => {
+      console.error("❌ Product fetch error:", err);
+      navigate('/');
+    })
+    .finally(() => setIsLoading(false));
+}, [id, navigate]);
 
   const handleCloseDeal = async () => {
     if (!apiProduct) return;
@@ -80,8 +87,16 @@ export const ProductDetailPage: React.FC = () => {
     if (!apiProduct) return;
     setChatLoading(true);
     try {
-      const chat = await startChat(apiProduct._id);
-      navigate(`/chat/${chat._id}`);
+const chat = await startChat(apiProduct._id);
+
+const chatId = chat._id;
+
+if (!chatId) {
+  console.error("❌ Chat ID missing", chat);
+  return;
+}
+
+navigate(`/chat/${chatId}`);
     } finally {
       setChatLoading(false);
     }
