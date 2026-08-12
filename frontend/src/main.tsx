@@ -7,6 +7,16 @@ import './index.css';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+      });
+    })
+    .catch(() => {});
+}
+
 // Hydrate auth state from localStorage before first render
 const Root: React.FC = () => {
   const hydrate = useAuthStore((s) => s.hydrate);
